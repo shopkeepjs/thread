@@ -3,28 +3,47 @@ import MagicString from "magic-string";
 import type { AST } from "svelte/compiler";
 import type { Property, SpreadElement } from "types/estree";
 
+/**
+ * Represents the options for configuring a thread.
+ *
+ * @property {string} [fileIdentifier] - An optional identifier for the file.
+ * @property {string} attributeName - The name of the attribute to be used.
+ * @property {string[]} elementNames - An array of element names.
+ */
 export type Options = {
   fileIdentifier?: string;
   attributeName: string;
   elementNames: string[];
 };
 
+/**
+ * Converts a camelCase string to kebab-case.
+ *
+ * @param str - The camelCase string to be converted.
+ * @returns The converted kebab-case string.
+ *
+ * @example
+ * ```typescript
+ * const result = camelToKebabCase('camelCaseString');
+ * console.log(result); // Outputs: 'camel-case-string'
+ * ```
+ */
 export function camelToKebabCase(str: string): string {
   return str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
 }
 
 // TODO - replace the any
 // deno-lint-ignore no-explicit-any
-const parseTemplateLiteralValue = (value: any): string | null => {
+function parseTemplateLiteralValue(value: any): string | null {
   const pre = value.quasis[0]?.value.raw;
   const post = value.quasis[1]?.value.raw;
   const variable = value.expressions[0].name;
   return `${pre}\{${variable}}${post}`;
-};
+}
 
 // TODO - insert design system specific values to transition things like 1 to 4px etc
 // TODO - clean this up so values are more readable and consistent (more separate functions based off type?)
-export function convertsCsPropToInlineStyles(
+function convertsCsPropToInlineStyles(
   customStylingAttribute: AST.BaseElement["attributes"][number],
 ): string | null {
   // TODO - this is a mess
@@ -92,7 +111,7 @@ export function convertsCsPropToInlineStyles(
   return `style="${insideString.trim()}"`;
 }
 
-export function parseNodes(
+function parseNodes(
   content: string,
   nodes: AST.Fragment["nodes"],
   options: Options,
@@ -130,6 +149,14 @@ export function parseNodes(
   return magicString.toString();
 }
 
+/**
+ * Processes the given content by parsing it and then parsing its nodes based on the provided options.
+ *
+ * @param content - The content to be processed.
+ * @param filename - The name of the file associated with the content.
+ * @param options - An object containing options for processing the content.
+ * @returns The processed content as a string. If an error occurs during parsing, the original content is returned.
+ */
 export function thread(
   content: string,
   filename: string,
@@ -147,6 +174,14 @@ export function thread(
   }
 }
 
+/**
+ * Creates a preprocessor group for threading operations.
+ *
+ * @param opts - The options to configure the threading preprocessor.
+ * @returns A preprocessor group with a name and a markup function.
+ *
+ * @throws {Error} If no filename is provided in the markup function.
+ */
 export function threadPreprocessor(opts: Options): PreprocessorGroup {
   return {
     name: "thread-preprocessor",
