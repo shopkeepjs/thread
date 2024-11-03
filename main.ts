@@ -1,1 +1,1 @@
-export { threadPreprocessor } from "./lib/thread-old.ts";
+export { threadPreprocessor } from "./lib/thread.ts";
