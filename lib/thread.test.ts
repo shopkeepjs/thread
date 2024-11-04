@@ -85,6 +85,52 @@ describe("testing options", () => {
   });
 });
 
+describe("tests storybook files", () => {
+  const htmlInput =
+    `<Story name="Primary" args={{ cs: { backgroundColor: 'aqua', width: '50px', height: '50px' }, text: 'Hello, world!'}}/>`;
+  const htmlOutput =
+    `<Story name="Primary" args={{ style: "background-color: aqua; width: 50px; height: 50px;", text: 'Hello, world!'}}/>`;
+
+  it.only("works if file has .story file extension", () => {
+    const input = script + htmlInput + style;
+    const output = script + htmlOutput + style;
+
+    const result = thread(input, "Test.story.svelte", {
+      ...options,
+    });
+    expect(result).toEqual(output);
+  });
+
+  it("works if file has .stories file extension", () => {
+    const input = script + htmlInput + style;
+    const output = script + htmlOutput + style;
+
+    const result = thread(input, "Test.stories.svelte", {
+      ...options,
+    });
+    expect(result).toEqual(output);
+  });
+  it("works if file has multiple stories", () => {
+    const input = script + htmlInput + htmlInput + style;
+    const output = script + htmlOutput + htmlOutput + style;
+
+    const result = thread(input, "Test.story.svelte", {
+      ...options,
+    });
+    expect(result).toEqual(output);
+  });
+  it("works if user supplied fileIdentifier", () => {
+    const input = script + htmlInput + htmlInput + style;
+    const output = script + htmlOutput + htmlOutput + style;
+
+    const result = thread(input, "Test.story.svelte", {
+      ...options,
+      fileIdentifier: "thread",
+    });
+    expect(result).toEqual(output);
+  });
+});
+
 describe("parsing attributes", () => {
   it("converts a single attribute", () => {
     const htmlInput = `<Flexbox cs={{ gap: '10px' }}></Flexbox>`;
