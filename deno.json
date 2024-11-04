@@ -1,6 +1,6 @@
 {
   "name": "@shopkeep/thread",
-  "version": "0.0.6",
+  "version": "0.0.7-alpha",
   "exports": "./main.ts",
   "tasks": {
     "dev": "deno run --watch main.ts"
