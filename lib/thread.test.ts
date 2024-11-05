@@ -91,7 +91,7 @@ describe("tests storybook files", () => {
   const htmlOutput =
     `<Story name="Primary" args={{ style: "background-color: aqua; width: 50px; height: 50px;", text: 'Hello, world!'}}/>`;
 
-  it.only("works if file has .story file extension", () => {
+  it("works if file has .story file extension", () => {
     const input = script + htmlInput + style;
     const output = script + htmlOutput + style;
 
@@ -119,11 +119,19 @@ describe("tests storybook files", () => {
     });
     expect(result).toEqual(output);
   });
-  it("works if user supplied fileIdentifier", () => {
+  it("does not parse if filename does not have fileIdentifier ", () => {
+    const input = script + htmlInput + htmlInput + style;
+    const result = thread(input, "Test.story.svelte", {
+      ...options,
+      fileIdentifier: "thread",
+    });
+    expect(result).toEqual(input);
+  });
+  it("does parse if filename does have fileIdentifier", () => {
     const input = script + htmlInput + htmlInput + style;
     const output = script + htmlOutput + htmlOutput + style;
 
-    const result = thread(input, "Test.story.svelte", {
+    const result = thread(input, "Test.thread.story.svelte", {
       ...options,
       fileIdentifier: "thread",
     });
