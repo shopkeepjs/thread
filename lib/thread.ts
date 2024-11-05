@@ -14,7 +14,10 @@ export type Options = {
   fileIdentifier?: string;
   attributeName: string;
   elementNames: string[];
+  shouldIncludeStorybookFiles?: boolean;
 };
+
+type ExtendedProperty = Property & Partial<AST.BaseNode>;
 
 /**
  * Converts a camelCase string to kebab-case.
@@ -42,23 +45,13 @@ function parseTemplateLiteralValue(value: any): string | null {
 }
 
 // TODO - insert design system specific values to transition things like 1 to 4px etc
-// TODO - clean this up so values are more readable and consistent (more separate functions based off type?)
-function convertsCsPropToInlineStyles(
-  customStylingAttribute: AST.BaseElement["attributes"][number],
-): string | null {
-  // TODO - this is a mess
-  if (customStylingAttribute.type !== "Attribute") return null;
-  if (typeof customStylingAttribute.value === "boolean") return null;
-  if (Array.isArray(customStylingAttribute.value)) return null;
-  if (customStylingAttribute.value.expression.type !== "ObjectExpression") {
-    return null;
-  }
-
-  const insideString = customStylingAttribute.value.expression.properties
-    .reduce((acc: string, property: Property | SpreadElement) => {
+function convertToSyleString(properties: Property[]): string {
+  const insideString = properties.reduce(
+    (acc: string, property: Property | SpreadElement) => {
       // TODO - this is also a mess
       if (!("key" in property)) return acc;
       if (!("name" in property.key)) return acc;
+
       const propertyName = camelToKebabCase(property.key.name);
 
       // Returns if the value is a variable - i.e. cs={{gap: gapAmount}}
@@ -107,45 +100,119 @@ function convertsCsPropToInlineStyles(
       }
       // Fallback
       return acc;
-    }, "");
-  return `style="${insideString.trim()}"`;
+    },
+    "",
+  );
+  return insideString.trim();
 }
 
-function parseNodes(
+function findAttribute(
+  attributes: AST.BaseElement["attributes"],
+  searchParameter: string,
+): AST.Attribute | undefined {
+  const attribute = attributes.find(
+    (attr: AST.BaseElement["attributes"][number]) =>
+      "name" in attr && attr.name === searchParameter,
+  );
+  if (
+    !attribute || attribute.type !== "Attribute" ||
+    typeof attribute.value === "boolean" || Array.isArray(attribute.value)
+  ) return undefined;
+  return attribute;
+}
+
+function findProperties(
+  attribute: AST.BaseElement["attributes"][number],
+): ExtendedProperty[] | undefined {
+  if (
+    !attribute || attribute.type !== "Attribute" ||
+    typeof attribute.value === "boolean" || Array.isArray(attribute.value) ||
+    attribute.value.expression.type !== "ObjectExpression"
+  ) return undefined;
+  return attribute.value.expression.properties.filter((
+    property: ExtendedProperty | SpreadElement,
+  ) => property.type === "Property");
+}
+
+function parseStorybookNode(
+  node: AST.Component,
+  options: Options,
+): { newStyleString: string; styleAttribute: ExtendedProperty | null } {
+  const attribute = findAttribute(node.attributes, "args");
+  if (!attribute) return { newStyleString: "", styleAttribute: null };
+  const attributeProperties = findProperties(attribute);
+
+  const styleAttribute = attributeProperties?.find((att) =>
+    "name" in att.key && att.key.name === options.attributeName
+  );
+
+  if (styleAttribute && styleAttribute.value.type === "ObjectExpression") {
+    const filteredProperties = styleAttribute.value.properties.filter((
+      property: Property | SpreadElement,
+    ) => property.type === "Property");
+    const newStyleString = `style: "${
+      convertToSyleString(filteredProperties)
+    }"`;
+    return { newStyleString, styleAttribute };
+  }
+  return { newStyleString: "", styleAttribute: null };
+}
+
+function parseNode(
+  node: AST.Component,
+  options: Options,
+): { newStyleString: string; styleAttribute: AST.Attribute | null } {
+  const styleAttribute = findAttribute(node.attributes, options.attributeName);
+  if (!styleAttribute) return { newStyleString: "", styleAttribute: null };
+  const styleProperties = findProperties(styleAttribute);
+
+  if (styleProperties) {
+    const newStyleString = `style="${convertToSyleString(styleProperties)}"`;
+    return { newStyleString, styleAttribute };
+  }
+  return { newStyleString: "", styleAttribute };
+}
+
+function replaceFileContents(
   content: string,
   nodes: AST.Fragment["nodes"],
+  filename: string,
   options: Options,
 ): string {
   const magicString = new MagicString(content);
 
-  function processNode(node: AST.Fragment["nodes"][number]) {
+  function replaceStyleStrings(node: AST.Fragment["nodes"][number]) {
+    let newStyleString: string = "";
+    let styleAttribute: AST.Attribute | ExtendedProperty | null = null;
+
+    const isStorybookStory = node.type === "Component" &&
+      node.name === "Story" &&
+      (filename.includes(".stories") || filename.includes(".story"));
+
     if (
-      node.type !== "Component" || !options.elementNames.includes(node.name)
+      node.type !== "Component" ||
+      (!options.elementNames.includes(node.name) && !isStorybookStory)
     ) return;
 
-    const customStyling = node.attributes?.find(
-      (attr: AST.BaseElement["attributes"][number]) =>
-        "name" in attr && attr.name === options.attributeName,
-    );
+    if (!isStorybookStory) {
+      ({ newStyleString, styleAttribute } = parseNode(node, options));
+    } else if (options.shouldIncludeStorybookFiles) {
+      ({ newStyleString, styleAttribute } = parseStorybookNode(node, options));
+    }
 
-    if (customStyling) {
-      const styleString = convertsCsPropToInlineStyles(customStyling);
-      if (styleString) {
-        magicString.overwrite(
-          customStyling.start,
-          customStyling.end,
-          styleString,
-        );
-      }
+    if (styleAttribute && styleAttribute.start && styleAttribute.end) {
+      magicString.overwrite(
+        styleAttribute.start,
+        styleAttribute.end,
+        newStyleString,
+      );
     }
 
     if (Array.isArray(node.fragment?.nodes) && node.fragment.nodes.length > 0) {
-      node.fragment.nodes.forEach(processNode);
+      node.fragment.nodes.forEach(replaceStyleStrings);
     }
   }
-
-  nodes.forEach(processNode);
-
+  nodes.forEach(replaceStyleStrings);
   return magicString.toString();
 }
 
@@ -167,7 +234,7 @@ export function thread(
   }
   try {
     const ast = parse(content, { filename, modern: true });
-    return parseNodes(content, ast.fragment.nodes, options);
+    return replaceFileContents(content, ast.fragment.nodes, filename, options);
   } catch (error) {
     console.error("Error parsing content", error);
     return content;
