@@ -87,13 +87,13 @@ function convertToSyleString(properties: Property[]): string {
           const leftValue = property.value.test.left.type === "Literal"
             ? property.value.test.left.raw
             : property.value.test.left.type === "Identifier"
-              ? property.value.test.left.name
-              : "";
+            ? property.value.test.left.name
+            : "";
           const rightValue = property.value.test.right.type === "Literal"
             ? property.value.test.right.raw
             : property.value.test.right.type === "Identifier"
-              ? property.value.test.right.name
-              : "";
+            ? property.value.test.right.name
+            : "";
           return acc +
             `${propertyName}: {${leftValue} ${property.value.test.operator} ${rightValue} ? '${property.value.consequent.value}' : '${property.value.alternate.value}'}; `;
         }
@@ -150,8 +150,9 @@ function parseStorybookNode(
     const filteredProperties = styleAttribute.value.properties.filter((
       property: Property | SpreadElement,
     ) => property.type === "Property");
-    const newStyleString = `style: "${convertToSyleString(filteredProperties)
-      }"`;
+    const newStyleString = `style: "${
+      convertToSyleString(filteredProperties)
+    }"`;
     return { newStyleString, styleAttribute };
   }
   return { newStyleString: "", styleAttribute: null };
