@@ -17,6 +17,16 @@ export type Options = {
   shouldIncludeStorybookFiles?: boolean;
 };
 
+type Position = {
+  start: number;
+  end: number;
+};
+
+type ParseResult = {
+  newStyleString?: string;
+  kill?: Position;
+} & Partial<Position>;
+
 type ExtendedProperty = Property & Partial<AST.BaseNode>;
 
 /**
@@ -42,6 +52,16 @@ function parseTemplateLiteralValue(value: any): string | null {
   const post = value.quasis[1]?.value.raw;
   const variable = value.expressions[0].name;
   return `${pre}\{${variable}}${post}`;
+}
+
+function getStyleString(styleAttribute: AST.Attribute): string {
+  if (
+    Array.isArray(styleAttribute.value) &&
+    styleAttribute.value[0].type === "Text"
+  ) {
+    return styleAttribute.value[0].raw;
+  }
+  return "";
 }
 
 // TODO - insert design system specific values to transition things like 1 to 4px etc
@@ -116,7 +136,7 @@ function findAttribute(
   );
   if (
     !attribute || attribute.type !== "Attribute" ||
-    typeof attribute.value === "boolean" || Array.isArray(attribute.value)
+    typeof attribute.value === "boolean"
   ) return undefined;
   return attribute;
 }
@@ -137,40 +157,83 @@ function findProperties(
 function parseStorybookNode(
   node: AST.Component,
   options: Options,
-): { newStyleString: string; styleAttribute: ExtendedProperty | null } {
+): ParseResult {
   const attribute = findAttribute(node.attributes, "args");
-  if (!attribute) return { newStyleString: "", styleAttribute: null };
+  if (!attribute) return {};
   const attributeProperties = findProperties(attribute);
 
-  const styleAttribute = attributeProperties?.find((att) =>
+  const threadAttribute = attributeProperties?.find((att) =>
     "name" in att.key && att.key.name === options.attributeName
   );
+  const styleAttribute = findAttribute(node.attributes, "style");
 
-  if (styleAttribute && styleAttribute.value.type === "ObjectExpression") {
-    const filteredProperties = styleAttribute.value.properties.filter((
+  if (
+    styleAttribute && threadAttribute &&
+    threadAttribute.value.type === "ObjectExpression" &&
+    threadAttribute.start && threadAttribute.end
+  ) {
+    const styleString = getStyleString(styleAttribute);
+    const filteredProperties = threadAttribute.value.properties.filter((
+      property: Property | SpreadElement,
+    ) => property.type === "Property");
+    const newStyleString = `style="${
+      styleString + convertToSyleString(filteredProperties)
+    }"`;
+    return {
+      newStyleString,
+      start: styleAttribute.start,
+      end: styleAttribute.end,
+      kill: { start: threadAttribute.start, end: threadAttribute.end },
+    };
+  } else if (
+    threadAttribute && threadAttribute.value.type === "ObjectExpression"
+  ) {
+    const filteredProperties = threadAttribute.value.properties.filter((
       property: Property | SpreadElement,
     ) => property.type === "Property");
     const newStyleString = `style: "${
       convertToSyleString(filteredProperties)
     }"`;
-    return { newStyleString, styleAttribute };
+    return {
+      newStyleString,
+      start: threadAttribute.start,
+      end: threadAttribute.end,
+    };
   }
-  return { newStyleString: "", styleAttribute: null };
+
+  return {};
 }
 
 function parseNode(
   node: AST.Component,
   options: Options,
-): { newStyleString: string; styleAttribute: AST.Attribute | null } {
-  const styleAttribute = findAttribute(node.attributes, options.attributeName);
-  if (!styleAttribute) return { newStyleString: "", styleAttribute: null };
-  const styleProperties = findProperties(styleAttribute);
+): ParseResult {
+  const threadAttribute = findAttribute(node.attributes, options.attributeName);
+  if (!threadAttribute) return {};
+  const styleProperties = findProperties(threadAttribute);
 
-  if (styleProperties) {
+  const styleAttribute = findAttribute(node.attributes, "style");
+
+  if (styleProperties && styleAttribute) {
+    const styleString = getStyleString(styleAttribute);
+    const newStyleString = `style="${
+      styleString + " " + convertToSyleString(styleProperties)
+    }"`;
+    return {
+      newStyleString,
+      start: styleAttribute.start,
+      end: styleAttribute.end,
+      kill: { start: threadAttribute.start, end: threadAttribute.end },
+    };
+  } else if (styleProperties) {
     const newStyleString = `style="${convertToSyleString(styleProperties)}"`;
-    return { newStyleString, styleAttribute };
+    return {
+      newStyleString,
+      start: threadAttribute.start,
+      end: threadAttribute.end,
+    };
   }
-  return { newStyleString: "", styleAttribute };
+  return {};
 }
 
 function replaceFileContents(
@@ -182,9 +245,7 @@ function replaceFileContents(
   const magicString = new MagicString(content);
 
   function replaceStyleStrings(node: AST.Fragment["nodes"][number]) {
-    let newStyleString: string = "";
-    let styleAttribute: AST.Attribute | ExtendedProperty | null = null;
-
+    let result: ParseResult = {};
     const isStorybookStory = node.type === "Component" &&
       node.name === "Story" &&
       (filename.includes(".stories") || filename.includes(".story"));
@@ -195,16 +256,24 @@ function replaceFileContents(
     ) return;
 
     if (!isStorybookStory) {
-      ({ newStyleString, styleAttribute } = parseNode(node, options));
+      result = parseNode(node, options);
     } else if (options.shouldIncludeStorybookFiles) {
-      ({ newStyleString, styleAttribute } = parseStorybookNode(node, options));
+      result = parseStorybookNode(node, options);
     }
 
-    if (styleAttribute && styleAttribute.start && styleAttribute.end) {
+    if (result.kill) {
       magicString.overwrite(
-        styleAttribute.start,
-        styleAttribute.end,
-        newStyleString,
+        result.kill.start,
+        result.kill.end,
+        "",
+      );
+    }
+
+    if (result.start && result.end && result.newStyleString) {
+      magicString.overwrite(
+        result.start,
+        result.end,
+        result.newStyleString,
       );
     }
 
