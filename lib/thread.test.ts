@@ -8,6 +8,8 @@ const script = `<script lang="ts">
   let color = $state('aqua');
   let computedHeight = $state(200);
   let computedWidth = $derived(color === 'aqua' ? 200 : 100);
+  let asdf = 'background-color: green;';
+  let cs = { backgroundColor: 'purple' };
 </script>`;
 
 const style = `<style>
@@ -246,6 +248,18 @@ describe("parsing attributes", () => {
       `<Flexbox style="background-color: green; flex-flow: row;" cs={{ color: 'green' }}></Flexbox>`;
     const htmlOutput =
       `<Flexbox style="background-color: green; flex-flow: row; color: green;" ></Flexbox>`;
+    const input = script + htmlInput + style;
+    const output = script + htmlOutput + style;
+
+    const result = thread(input, "Test.svelte", options);
+    expect(result).toEqual(output);
+  });
+
+  it("combines existing style attribute when it is declared as a javascript variable", () => {
+    const htmlInput =
+      `<Flexbox {style} cs={{ color: 'green' }}></Flexbox>`;
+    const htmlOutput =
+      `<Flexbox style="{style} color: green;" ></Flexbox>`;
     const input = script + htmlInput + style;
     const output = script + htmlOutput + style;
 
