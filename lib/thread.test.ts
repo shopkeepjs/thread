@@ -240,6 +240,18 @@ describe("parsing attributes", () => {
     const result = thread(input, "Test.svelte", options);
     expect(result).toEqual(output);
   });
+
+  it("combines existing style attribute with the newly parsed styles", () => {
+    const htmlInput =
+      `<Flexbox style="background-color: green; flex-flow: row;" cs={{ color: 'green' }}></Flexbox>`;
+    const htmlOutput =
+      `<Flexbox style="background-color: green; flex-flow: row; color: green;" ></Flexbox>`;
+    const input = script + htmlInput + style;
+    const output = script + htmlOutput + style;
+
+    const result = thread(input, "Test.svelte", options);
+    expect(result).toEqual(output);
+  });
 });
 
 describe("camelToKebabCase", () => {
