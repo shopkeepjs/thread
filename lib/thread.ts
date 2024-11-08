@@ -56,11 +56,14 @@ function parseTemplateLiteralValue(value: any): string | null {
 
 function getStyleString(styleAttribute: AST.Attribute): string {
   if (
+    typeof styleAttribute.value !== "boolean" &&
+    !Array.isArray(styleAttribute.value) &&
+    "name" in styleAttribute.value.expression
+  ) return `{${styleAttribute.value.expression.name}}`;
+  if (
     Array.isArray(styleAttribute.value) &&
     styleAttribute.value[0].type === "Text"
-  ) {
-    return styleAttribute.value[0].raw;
-  }
+  ) return styleAttribute.value[0].raw;
   return "";
 }
 
@@ -262,10 +265,9 @@ function replaceFileContents(
     }
 
     if (result.kill) {
-      magicString.overwrite(
+      magicString.remove(
         result.kill.start,
         result.kill.end,
-        "",
       );
     }
 
