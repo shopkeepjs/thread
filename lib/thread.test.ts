@@ -256,10 +256,8 @@ describe("parsing attributes", () => {
   });
 
   it("combines existing style attribute when it is declared as a javascript variable", () => {
-    const htmlInput =
-      `<Flexbox {style} cs={{ color: 'green' }}></Flexbox>`;
-    const htmlOutput =
-      `<Flexbox style="{style} color: green;" ></Flexbox>`;
+    const htmlInput = `<Flexbox {style} cs={{ color: 'green' }}></Flexbox>`;
+    const htmlOutput = `<Flexbox style="{style} color: green;" ></Flexbox>`;
     const input = script + htmlInput + style;
     const output = script + htmlOutput + style;
 

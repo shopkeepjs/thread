@@ -55,8 +55,15 @@ function parseTemplateLiteralValue(value: any): string | null {
 }
 
 function getStyleString(styleAttribute: AST.Attribute): string {
-  if (typeof styleAttribute.value !== "boolean" && !Array.isArray(styleAttribute.value) && "name" in styleAttribute.value.expression) return `{${styleAttribute.value.expression.name}}`;
-  if (Array.isArray(styleAttribute.value) && styleAttribute.value[0].type === "Text") return styleAttribute.value[0].raw
+  if (
+    typeof styleAttribute.value !== "boolean" &&
+    !Array.isArray(styleAttribute.value) &&
+    "name" in styleAttribute.value.expression
+  ) return `{${styleAttribute.value.expression.name}}`;
+  if (
+    Array.isArray(styleAttribute.value) &&
+    styleAttribute.value[0].type === "Text"
+  ) return styleAttribute.value[0].raw;
   return "";
 }
 
@@ -103,13 +110,13 @@ function convertToSyleString(properties: Property[]): string {
           const leftValue = property.value.test.left.type === "Literal"
             ? property.value.test.left.raw
             : property.value.test.left.type === "Identifier"
-              ? property.value.test.left.name
-              : "";
+            ? property.value.test.left.name
+            : "";
           const rightValue = property.value.test.right.type === "Literal"
             ? property.value.test.right.raw
             : property.value.test.right.type === "Identifier"
-              ? property.value.test.right.name
-              : "";
+            ? property.value.test.right.name
+            : "";
           return acc +
             `${propertyName}: {${leftValue} ${property.value.test.operator} ${rightValue} ? '${property.value.consequent.value}' : '${property.value.alternate.value}'}; `;
         }
@@ -172,8 +179,9 @@ function parseStorybookNode(
     const filteredProperties = threadAttribute.value.properties.filter((
       property: Property | SpreadElement,
     ) => property.type === "Property");
-    const newStyleString = `style="${styleString + convertToSyleString(filteredProperties)
-      }"`;
+    const newStyleString = `style="${
+      styleString + convertToSyleString(filteredProperties)
+    }"`;
     return {
       newStyleString,
       start: styleAttribute.start,
@@ -186,8 +194,9 @@ function parseStorybookNode(
     const filteredProperties = threadAttribute.value.properties.filter((
       property: Property | SpreadElement,
     ) => property.type === "Property");
-    const newStyleString = `style: "${convertToSyleString(filteredProperties)
-      }"`;
+    const newStyleString = `style: "${
+      convertToSyleString(filteredProperties)
+    }"`;
     return {
       newStyleString,
       start: threadAttribute.start,
@@ -210,8 +219,9 @@ function parseNode(
 
   if (styleProperties && styleAttribute) {
     const styleString = getStyleString(styleAttribute);
-    const newStyleString = `style="${styleString + " " + convertToSyleString(styleProperties)
-      }"`;
+    const newStyleString = `style="${
+      styleString + " " + convertToSyleString(styleProperties)
+    }"`;
     return {
       newStyleString,
       start: styleAttribute.start,
