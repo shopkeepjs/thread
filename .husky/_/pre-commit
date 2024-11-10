@@ -1,2 +1,2 @@
-deno test
+deno test --allow-read
 echo "Tests passed"
