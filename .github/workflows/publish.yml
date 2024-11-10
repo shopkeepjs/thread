@@ -5,9 +5,9 @@ on:
     workflows: ["Build"]
     types:
       - completed
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
 
 jobs:
   publish:
@@ -22,7 +22,6 @@ jobs:
           output=$(npx jsr publish 2>&1)
           echo "$output"
           if echo "$output" | grep -q 'Skipping, already published'; then
-            echo "Fail pipeline - already published"
+            echo "::error::The publish step failed because this version number has already been published."
             exit 1
           fi
-          echo "Success - published!"
