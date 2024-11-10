@@ -9,8 +9,9 @@
   "license": "MIT",
   "imports": {
     "@std/assert": "jsr:@std/assert@1",
-    "types/estree": "npm:@types/estree@^1.0.6",
+    "husky": "npm:husky@^9.1.6",
     "magic-string": "npm:magic-string@^0.30.12",
-    "svelte": "npm:svelte@^5.1.6"
+    "svelte": "npm:svelte@^5.1.6",
+    "types/estree": "npm:@types/estree@^1.0.6"
   }
 }
