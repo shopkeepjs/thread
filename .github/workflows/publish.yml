@@ -5,9 +5,9 @@ on:
     workflows: ["Build"]
     types:
       - completed
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
 jobs:
   publish:
     runs-on: ubuntu-latest
