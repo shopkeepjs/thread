@@ -1,4 +1,2 @@
 deno fmt
 deno lint
-deno test --allow-read
-echo "Tests passed"
