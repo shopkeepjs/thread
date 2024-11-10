@@ -20,8 +20,12 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           set -e
-          OUTPUT=$(npx jsr publish)
+          OUTPUT=$(npx jsr publish || true)
           echo "$OUTPUT"
+          if [[ -z "$OUTPUT" ]]; then
+            echo "Error: Publish command failed. Please check the output."
+            exit 1
+          fi
           if echo "$OUTPUT" | grep -q "Warning: Skipping, already published"; then
             echo "Error: The package has already been published. Please increment the version number."
             exit 1
