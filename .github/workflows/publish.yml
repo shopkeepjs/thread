@@ -8,6 +8,7 @@ on:
   # push:
   #   branches:
   #     - main
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -17,13 +18,9 @@ jobs:
       id-token: write # The OIDC ID token is used for authentication with JSR.
     steps:
       - uses: actions/checkout@v4
-      - run: npx jsr publish
-        id: publish_step
-
-      # Check the output of the previous step to ensure the package was published
       - run: |
-          echo "${{ steps.publish_step.outputs.stdout }}"
-          if grep -q "Warning: Skipping, already published" <<< "${{ steps.publish_step.outputs.stdout }}"; then
-            echo "Error: The package has already been published. Please increment the version number."
+          output=$(npx jsr publish)
+          echo "$output"
+          if echo "$output" | grep -q 'Skipping, already published'; then
             exit 1
           fi
