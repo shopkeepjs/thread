@@ -1,0 +1,27 @@
+name: Publish
+
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      id-token: write # The OIDC ID token is used for authentication with JSR.
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          output=$(npx jsr publish --dry-run 2>&1)
+          echo "$output"
+          if echo "$output" | grep -q 'Skipping, already published'; then
+            echo "::error::The publish step failed because this version number has already been published."
+            exit 1
+          fi
