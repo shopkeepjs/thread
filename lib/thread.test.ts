@@ -229,6 +229,26 @@ describe("parsing attributes", () => {
     expect(result).toEqual(output);
   });
 
+  it("converts ternary attribute without alternative", () => {
+    const htmlInput = `<Flexbox cs={{ gap: isGap && '10px' }}></Flexbox>`;
+    const htmlOutput =
+      `<Flexbox style="{isGap && \`gap: \${'10px'}\`};"></Flexbox>`;
+    const input = script + htmlInput + style;
+    const output = script + htmlOutput + style;
+
+    const result = thread(input, "Test.svelte", options);
+    expect(result).toEqual(output);
+
+    const htmlInputWithVar = `<Flexbox cs={{ gap: isGap && isGap }}></Flexbox>`;
+    const htmlOutputWithVar =
+      `<Flexbox style="{isGap && \`gap: \${isGap}\`};"></Flexbox>`;
+    const inputWithVar = script + htmlInputWithVar + style;
+    const outputWithVar = script + htmlOutputWithVar + style;
+
+    const resultWithVar = thread(inputWithVar, "Test.svelte", options);
+    expect(resultWithVar).toEqual(outputWithVar);
+  });
+
   it("converts ternary attribute with equals", () => {
     const htmlInput =
       `<Flexbox cs={{ gap: isGap === 'yes' ? '10px' : '20px' }}></Flexbox>`;
@@ -239,6 +259,50 @@ describe("parsing attributes", () => {
 
     const result = thread(input, "Test.svelte", options);
     expect(result).toEqual(output);
+  });
+
+  it("converts ternary with undefined", () => {
+    const htmlInput =
+      `<Flexbox cs={{ gap: isGap ? '10px' : undefined }}></Flexbox>`;
+    const htmlOutput =
+      `<Flexbox style="{isGap && \`gap: \${'10px'}\`};"></Flexbox>`;
+    const input = script + htmlInput + style;
+    const output = script + htmlOutput + style;
+
+    const result = thread(input, "Test.svelte", options);
+    expect(result).toEqual(output);
+
+    const htmlInputOposite =
+      `<Flexbox cs={{ gap: isGap ? undefined : '10px' }}></Flexbox>`;
+    const htmlOutputOpposite =
+      `<Flexbox style="{isGap && \`gap: \${'10px'}\`};"></Flexbox>`;
+    const secondInput = script + htmlInputOposite + style;
+    const secondOutput = script + htmlOutputOpposite + style;
+
+    const secondResult = thread(secondInput, "Test.svelte", options);
+    expect(secondResult).toEqual(secondOutput);
+  });
+
+  it("converts negative ternary with undefined", () => {
+    const htmlInput =
+      `<Flexbox cs={{ gap: !isGap ? '10px' : undefined }}></Flexbox>`;
+    const htmlOutput =
+      `<Flexbox style="{!isGap && \`gap: \${'10px'}\`};"></Flexbox>`;
+    const input = script + htmlInput + style;
+    const output = script + htmlOutput + style;
+
+    const result = thread(input, "Test.svelte", options);
+    expect(result).toEqual(output);
+
+    const htmlInputUndefinedOpposite =
+      `<Flexbox cs={{ gap: !isGap ? undefined : '10px'}}></Flexbox>`;
+    const htmlOuptutUndefinedOpposite =
+      `<Flexbox style="{!isGap && \`gap: \${'10px'}\`};"></Flexbox>`;
+    const secondInput = script + htmlInputUndefinedOpposite + style;
+    const secondOutput = script + htmlOuptutUndefinedOpposite + style;
+
+    const secondResult = thread(secondInput, "Test.svelte", options);
+    expect(secondResult).toEqual(secondOutput);
   });
 
   it("converts ternary attribute with not equals", () => {

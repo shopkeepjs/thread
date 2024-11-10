@@ -98,12 +98,60 @@ function convertToSyleString(properties: Property[]): string {
           `${propertyName}: ${parseTemplateLiteralValue(property.value)}; `;
       }
 
+      // Returns if the value is a logical expression - i.e. cs={{gap: isGap && '10px'}}
+      // or if it's a logical expression with a variable - i.e. cs={{gap: isGap && gapAmount}}
+      if (property.value.type === "LogicalExpression") {
+        const conditionalName = property.value.left.type === "Identifier" &&
+          property.value.left.name;
+
+        const value = property.value.right.type === "Literal"
+          ? property.value.right.raw
+          : property.value.right.type === "Identifier" &&
+            property.value.right.name;
+        return acc +
+          `{${conditionalName} && \`${propertyName}: \${${value}}\`}; `;
+      }
+
       // Returns if the value is a ternary
-      if (
-        property.value.type === "ConditionalExpression" &&
-        property.value.consequent.type === "Literal" &&
-        property.value.alternate.type === "Literal"
-      ) {
+      if (property.value.type === "ConditionalExpression") {
+        // Returns if the value is a ternary with a unary expression - i.e. cs={{gap: !isGap ? '10px' : undefined}}
+        if (
+          property.value.test.type === "UnaryExpression" &&
+          (property.value.consequent.type !== "Literal" ||
+            property.value.alternate.type !== "Literal")
+        ) {
+          const testName = "name" in property.value.test.argument &&
+            property.value.test.argument.name;
+          const alternateName = property.value.alternate.type === "Literal" &&
+            property.value.alternate.raw;
+          const consequentName = property.value.consequent.type === "Literal" &&
+            property.value.consequent.raw;
+
+          return acc +
+            `{!${testName} && \`${propertyName}: \${${
+              consequentName || alternateName
+            }}\`}; `;
+        }
+
+        // Returns if the value is a ternary with an undefined - i.e. cs={{gap: isGap ? '10px' : undefined}}
+        if (
+          property.value.consequent.type !== "Literal" ||
+          property.value.alternate.type !== "Literal"
+        ) {
+          // TODO - I think this is a uncaptured edge case
+          if (property.value.test.type !== "Identifier") return acc;
+          const testName = property.value.test.name;
+          const alternateName = property.value.alternate.type === "Literal" &&
+            property.value.alternate.raw;
+          const consequentName = property.value.consequent.type === "Literal" &&
+            property.value.consequent.raw;
+
+          return acc +
+            `{${testName} && \`${propertyName}: \${${
+              consequentName || alternateName
+            }}\`}; `;
+        }
+
         // Returns if the value is a ternary - i.e. cs={{gap: isGap ? '10px' : '20px'}}
         if (property.value.test.type === "Identifier") {
           return acc +
