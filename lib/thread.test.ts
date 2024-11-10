@@ -163,6 +163,16 @@ describe("parsing attributes", () => {
     expect(result).toEqual(output);
   });
 
+  it("converts a single attribute that is a css variable", () => {
+    const htmlInput = `<Flexbox cs={{ '--gap': '10px' }}></Flexbox>`;
+    const htmlOutput = `<Flexbox style="--gap: 10px;"></Flexbox>`;
+    const input = script + htmlInput + style;
+    const output = script + htmlOutput + style;
+
+    const result = thread(input, "Test.svelte", options);
+    expect(result).toEqual(output);
+  });
+
   it("converts multiple attributes", () => {
     const htmlInput =
       `<Flexbox cs={{ gap: '10px', backgroundColor: 'aqua' }}></Flexbox>`;

@@ -73,9 +73,14 @@ function convertToSyleString(properties: Property[]): string {
     (acc: string, property: Property | SpreadElement) => {
       // TODO - this is also a mess
       if (!("key" in property)) return acc;
-      if (!("name" in property.key)) return acc;
 
-      const propertyName = camelToKebabCase(property.key.name);
+      let propertyName;
+      if ("name" in property.key) {
+        propertyName = camelToKebabCase(property.key.name);
+      }
+      // Allows for css variables - i.e. cs={{'--gap': 10px}}
+      if ("value" in property.key) propertyName = property.key.value;
+      if (!propertyName) return acc;
 
       // Returns if the value is a variable - i.e. cs={{gap: gapAmount}}
       if ("name" in property.value) {
