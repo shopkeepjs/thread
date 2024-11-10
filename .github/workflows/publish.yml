@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          output=$(npx jsr publish)
+          output=$(npx jsr publish 2>&1)
           echo "$output"
           if echo "$output" | grep -q 'Skipping, already published'; then
             exit 1
