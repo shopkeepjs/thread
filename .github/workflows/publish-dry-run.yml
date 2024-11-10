@@ -1,10 +1,6 @@
 name: Publish
 
 on:
-  workflow_run:
-    workflows: ["Build"]
-    types:
-      - completed
   pull_request:
     branches:
       - main
