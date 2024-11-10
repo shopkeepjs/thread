@@ -5,22 +5,28 @@ on:
     workflows: ["Build"]
     types:
       - completed
+  push:
+    branches:
+      - main
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
     permissions:
       contents: read
       id-token: write # The OIDC ID token is used for authentication with JSR.
     steps:
       - uses: actions/checkout@v4
-      - run: npx jsr publish
-        id: publish_step
-
-      # Check the output of the previous step to ensure the package was published
       - run: |
-          if grep -q "Warning: Skipping, already published" <<< "${{ steps.publish_step.outputs.stdout }}"; then
+          set -e
+          OUTPUT=$(npx jsr publish || true)
+          echo "$OUTPUT"
+          if [[ -z "$OUTPUT" ]]; then
+            echo "Error: Publish command failed. Please check the output."
+            exit 1
+          fi
+          if echo "$OUTPUT" | grep -q "Warning: Skipping, already published"; then
             echo "Error: The package has already been published. Please increment the version number."
             exit 1
           fi
