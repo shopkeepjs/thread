@@ -22,5 +22,7 @@ jobs:
           output=$(npx jsr publish 2>&1)
           echo "$output"
           if echo "$output" | grep -q 'Skipping, already published'; then
+            echo "Fail pipeline - already published"
             exit 1
           fi
+          echo "Success - published!"
