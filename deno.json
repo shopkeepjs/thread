@@ -1,6 +1,6 @@
 {
   "name": "@shopkeep/thread",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "exports": "./main.ts",
   "tasks": {
     "dev": "deno run --watch main.ts",
@@ -8,9 +8,10 @@
   },
   "license": "MIT",
   "imports": {
+    "@shopkeep/fletcher": "jsr:@shopkeep/fletcher@^1.0.0",
     "@std/assert": "jsr:@std/assert@1",
-    "types/estree": "npm:@types/estree@^1.0.6",
     "magic-string": "npm:magic-string@^0.30.12",
-    "svelte": "npm:svelte@^5.1.6"
+    "svelte": "npm:svelte@^5.1.6",
+    "types/estree": "npm:@types/estree@^1.0.6"
   }
 }

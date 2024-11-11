@@ -1,4 +1,4 @@
-import { camelToKebabCase, thread } from "./thread.ts";
+import { thread } from "./thread.ts";
 import { describe, it } from "jsr:@std/testing/bdd";
 import { expect } from "jsr:@std/expect";
 
@@ -337,19 +337,5 @@ describe("parsing attributes", () => {
 
     const result = thread(input, "Test.svelte", options);
     expect(result).toEqual(output);
-  });
-});
-
-describe("camelToKebabCase", () => {
-  it("converts camel case to kebab case", () => {
-    expect(camelToKebabCase("backgroundColor")).toEqual("background-color");
-  });
-  it("converts camel case with multiple words to kebab case", () => {
-    expect(camelToKebabCase("borderTopLeftRadius")).toEqual(
-      "border-top-left-radius",
-    );
-  });
-  it("does not convert kebab case", () => {
-    expect(camelToKebabCase("bordertopleft")).toEqual("bordertopleft");
   });
 });

@@ -72,17 +72,6 @@ export type Options = {
 - **elementNames**: List of element names to target for transformation (e.g.,
   `Flexbox`, `Box`).
 
-## Helper Functions
-
-### camelToKebabCase
-
-Converts camelCase strings to kebab-case, useful for generating inline styles.
-
-```typescript
-const result = camelToKebabCase("camelCaseString");
-// Outputs: 'camel-case-string'
-```
-
 ## Development Notes
 
 - **TODOs**: The current implementation has several `TODO` comments for adding
