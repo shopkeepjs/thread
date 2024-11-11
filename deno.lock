@@ -1,6 +1,7 @@
 {
   "version": "4",
   "specifiers": {
+    "jsr:@shopkeep/fletcher@1": "1.0.0",
     "jsr:@std/assert@*": "1.0.7",
     "jsr:@std/assert@1": "1.0.7",
     "jsr:@std/assert@^1.0.7": "1.0.7",
@@ -13,6 +14,9 @@
     "npm:svelte@^5.1.6": "5.1.9_acorn@8.14.0"
   },
   "jsr": {
+    "@shopkeep/fletcher@1.0.0": {
+      "integrity": "a81d83aebf637089a22f32f0e7681cf9290de552a9dd4654a80859ce8207dc73"
+    },
     "@std/assert@1.0.7": {
       "integrity": "64ce9fac879e0b9f3042a89b3c3f8ccfc9c984391af19e2087513a79d73e28c3",
       "dependencies": [
@@ -136,6 +140,7 @@
   },
   "workspace": {
     "dependencies": [
+      "jsr:@shopkeep/fletcher@1",
       "jsr:@std/assert@1",
       "npm:@types/estree@^1.0.6",
       "npm:magic-string@~0.30.12",

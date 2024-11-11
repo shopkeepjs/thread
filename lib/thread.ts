@@ -1,3 +1,4 @@
+import { camelToKebabCase } from "@shopkeep/fletcher";
 import { parse, type PreprocessorGroup } from "svelte/compiler";
 import MagicString from "magic-string";
 import type { AST } from "svelte/compiler";
@@ -28,22 +29,6 @@ type ParseResult = {
 } & Partial<Position>;
 
 type ExtendedProperty = Property & Partial<AST.BaseNode>;
-
-/**
- * Converts a camelCase string to kebab-case.
- *
- * @param str - The camelCase string to be converted.
- * @returns The converted kebab-case string.
- *
- * @example
- * ```typescript
- * const result = camelToKebabCase('camelCaseString');
- * console.log(result); // Outputs: 'camel-case-string'
- * ```
- */
-export function camelToKebabCase(str: string): string {
-  return str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
-}
 
 // TODO - replace the any
 // deno-lint-ignore no-explicit-any
