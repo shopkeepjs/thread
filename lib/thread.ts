@@ -15,7 +15,7 @@ export type Options = {
   fileIdentifier?: string;
   attributeName: string;
   elementNames: string[];
-  shouldIncludeStorybookFiles?: boolean;
+  _internalShouldIncludeStorybookFiles?: boolean;
 };
 
 type Position = {
@@ -298,7 +298,7 @@ function replaceFileContents(
 
     if (!isStorybookStory) {
       result = parseNode(node, options);
-    } else if (options.shouldIncludeStorybookFiles) {
+    } else if (options._internalShouldIncludeStorybookFiles) {
       result = parseStorybookNode(node, options);
     }
 

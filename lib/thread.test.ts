@@ -93,7 +93,10 @@ describe("tests storybook files", () => {
   const htmlOutput =
     `<Story name="Primary" args={{ style: "background-color: aqua; width: 50px; height: 50px;", text: 'Hello, world!'}}/>`;
 
-  const storybookOptions = { ...options, shouldIncludeStorybookFiles: true };
+  const storybookOptions = {
+    ...options,
+    _internalShouldIncludeStorybookFiles: true,
+  };
 
   it("works if file has .story file extension", () => {
     const input = script + htmlInput + style;
@@ -141,7 +144,7 @@ describe("tests storybook files", () => {
     });
     expect(result).toEqual(output);
   });
-  it("does not parse if shouldIncludeStorybookOptions is not set", () => {
+  it("does not parse if  _internalShouldIncludeStorybookFiles Options is not set", () => {
     const input = script + htmlInput + htmlInput + style;
 
     const result = thread(input, "Test.thread.story.svelte", {
